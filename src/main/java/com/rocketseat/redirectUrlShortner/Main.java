@@ -10,13 +10,13 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Main implements RequestHandler<Map<String, Object>, Map<String, String>> {
+public class Main implements RequestHandler<Map<String, Object>, Map<String, Object>> {
     private  final S3Client s3Client = S3Client.builder().build();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Integer MILISECONDS_TO_SECONDS = 1000;
 
     @Override
-    public Map<String, String> handleRequest(Map<String, Object> input, Context context) {
+    public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         String pathParameters = (String) input.get("rawPath");
         String shortUrlCode = pathParameters.replace("/", "");
 
@@ -46,11 +46,21 @@ public class Main implements RequestHandler<Map<String, Object>, Map<String, Str
         }
 
         long currentTimeInSeconds = System.currentTimeMillis() / MILISECONDS_TO_SECONDS;
-        if (currentTimeInSeconds < originalUrlData.getExpirationTime()) {
-            Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
+
+        if (originalUrlData.getExpirationTime() < currentTimeInSeconds) {
+            response.put("statusCode", 410);
+            response.put("body", "This URL has expired");
+
+            return response;
         }
 
+        response.put("statusCode", 302);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Location", originalUrlData.getOriginalUrl());
+        response.put("headers", headers);
 
-        return null;
+
+        return response;
     }
 }
