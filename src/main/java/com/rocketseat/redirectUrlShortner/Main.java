@@ -7,12 +7,13 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Main implements RequestHandler<Map<String, Object>, Map<String, String>> {
     private  final S3Client s3Client = S3Client.builder().build();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final
+    private final Integer MILISECONDS_TO_SECONDS = 1000;
 
     @Override
     public Map<String, String> handleRequest(Map<String, Object> input, Context context) {
@@ -44,7 +45,10 @@ public class Main implements RequestHandler<Map<String, Object>, Map<String, Str
             throw new RuntimeException("Error deserializing URL data: " + exception.getMessage());
         }
 
-        long currentTimeInSeconds = System.currentTimeMillis() / 1000;
+        long currentTimeInSeconds = System.currentTimeMillis() / MILISECONDS_TO_SECONDS;
+        if (currentTimeInSeconds < originalUrlData.getExpirationTime()) {
+            Map<String, String> response = new HashMap<>();
+        }
 
 
         return null;
