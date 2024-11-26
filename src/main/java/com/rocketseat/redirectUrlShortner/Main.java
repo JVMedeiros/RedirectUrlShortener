@@ -14,27 +14,28 @@ public class Main implements RequestHandler<Map<String, Object>, Map<String, Obj
     private  final S3Client s3Client = S3Client.builder().build();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Integer MILISECONDS_TO_SECONDS = 1000;
+    private final String BUCKET_NAME = "java-shortener-url-storage-test";
 
     @Override
     public Map<String, Object> handleRequest(Map<String, Object> input, Context context) {
         String pathParameters = (String) input.get("rawPath");
         String shortUrlCode = pathParameters.replace("/", "");
+        String keyBucket = shortUrlCode + ".json";
 
         if(shortUrlCode == null || shortUrlCode.isEmpty()) {
             throw new IllegalArgumentException("Invalid input: 'shortUrlCode' is required");
         }
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket("java-shortener-url-storage-test")
-                .key(shortUrlCode + ".json")
+                .bucket(BUCKET_NAME)
+                .key(keyBucket)
                 .build();
 
         InputStream s3ObjectStream;
-
         try {
             s3ObjectStream = s3Client.getObject(getObjectRequest);
         } catch (Exception exception) {
-            throw new RuntimeException("Error fetching URL data from S3: " + exception.getMessage());
+            throw new RuntimeException("Error fetching URL data from S3: " + exception.getMessage(), exception);
         }
 
         OriginalUrlData originalUrlData;
